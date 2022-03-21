@@ -676,7 +676,7 @@ static int set_driver_mode(ws2811_t *ws2811, int gpionum)
     else if (gpionum == 21 || gpionum == 31) {
         ws2811->device->driver_mode = PCM;
     }
-    else if (gpionum == 10) {
+    else if (gpionum == 10 || gpionum == 20) {
         ws2811->device->driver_mode = SPI;
     }
     else {
@@ -695,7 +695,7 @@ static int check_hwver_and_gpionum(ws2811_t *ws2811)
     int hwver, gpionum;
     int gpionums_B1[] = { 10, 18, 21 };
     int gpionums_B2[] = { 10, 18, 31 };
-    int gpionums_40p[] = { 10, 12, 18, 21};
+    int gpionums_40p[] = { 10, 12, 18, 20, 21};
     int i;
 
     rpi_hw = ws2811->rpi_hw;
@@ -759,7 +759,7 @@ static ws2811_return_t spi_init(ws2811_t *ws2811)
     uint32_t base = ws2811->rpi_hw->periph_base;
     int pinnum = ws2811->channel[0].gpionum;
 
-    spi_fd = open("/dev/spidev0.0", O_RDWR);
+    spi_fd = open("/dev/spidev1.0", O_RDWR);
     if (spi_fd < 0) {
         fprintf(stderr, "Cannot open /dev/spidev0.0. spi_bcm2835 module not loaded?\n");
         return WS2811_ERROR_SPI_SETUP;
@@ -813,7 +813,10 @@ static ws2811_return_t spi_init(ws2811_t *ws2811)
     {
         return WS2811_ERROR_SPI_SETUP;
     }
-    gpio_function_set(device->gpio, pinnum, 0);	// SPI-MOSI ALT0
+	
+    // FOR SPI0, pin MODE must be ALT0 (MOSI GPIO10)
+    // FOR SPI1, pin MODE must be ALT4 (MOSI GPIO20)	
+    gpio_function_set(device->gpio, pinnum, 4);
 
     // Allocate LED buffer
     ws2811_channel_t *channel = &ws2811->channel[0];
